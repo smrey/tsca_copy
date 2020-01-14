@@ -10,3 +10,9 @@ results_directory_l_drive = os.path.join(os.sep, "L:", os.sep, "NGS ANALYSIS", "
 archive_directory_cluster = os.path.join(os.sep, "Users", "sararey", "Documents", "tsca", "raw")
 results_directory_cluster = os.path.join(os.sep, "Users", "sararey", "Documents", "tsca")
 results_directory_l_drive = os.path.join(os.sep, "Users", "sararey", "Documents", "tsca", "results")
+
+ntc_name = "NTC"
+ntc_directories = ["InterOp"]
+ntc_files = ["RunInfo.xml", "RunParameters.xml"]
+sample_directories = []
+sample_files = ["customClinicalCoverageTargetCoverage.txt", "customGaps.bed"]
