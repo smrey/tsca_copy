@@ -42,35 +42,62 @@ def parse_variables(run_id):
     return variables
 
 
-def copy_sample(source_directory, target_directory, run_id, s):
+def copy_sample(root, source_directory, target_directory, run_id, s):
     if sample_files:
         for f in sample_files:
             # Copy files from cluster to L: drive
-            shutil.copy2(os.path.join(source_directory, f"{run_id}_{s}_{f}"), target_directory)
+            try:
+                shutil.copy2(os.path.join(source_directory, f"{run_id}_{s}_{f}"), target_directory)
+            except:
+                err = f"Problem with copying file {run_id}_{s}_{f} for sample {s}. Check that it is present on W:."
+                logging.exception(Exception(err))
+                error_conditions(root, err)
+                sys.exit(1)
     if sample_directories:
         for d in sample_directories:
+            # Copy directories from cluster to L: drive
             if not os.path.exists(os.path.join(target_directory, d)):
                 os.makedirs(os.path.join(target_directory, d))
             # Copy directory files
             for f in os.listdir((os.path.join(source_directory, d))):
-                shutil.copy2(os.path.join(source_directory, d, f),
-                             os.path.join(source_directory, d))
+                try:
+                    shutil.copy2(os.path.join(source_directory, d, f),
+                                 os.path.join(target_directory, d))
+                except:
+                    err = f"Problem with copying file {f} from directory {d} for sample {s}. " \
+                          f"Check that it is present on W:."
+                    logging.exception(Exception(err))
+                    error_conditions(root, err)
+                    sys.exit(1)
     return f"Sample {s} copy successful"
 
 
-def copy_ntc(archive_directory, target_directory):
+def copy_ntc(root, archive_directory, target_directory):
     if ntc_files:
         for f in ntc_files:
-            shutil.copy2(os.path.join(archive_directory, f),
-                         os.path.join(target_directory))
+            try:
+                shutil.copy2(os.path.join(archive_directory, f),
+                             os.path.join(target_directory))
+            except:
+                err = f"Problem with copying file {f} for NTC. Check that it is present on A:."
+                logging.exception(Exception(err))
+                error_conditions(root, err)
+                sys.exit(1)
         for d in ntc_directories:
             # Make directory
             if not os.path.exists(os.path.join(target_directory, d)):
                 os.makedirs(os.path.join(target_directory, d))
             # Copy directory files
             for f in os.listdir((os.path.join(archive_directory, d))):
-                shutil.copy2(os.path.join(archive_directory, d, f),
-                             os.path.join(target_directory, d))
+                try:
+                    shutil.copy2(os.path.join(archive_directory, d, f),
+                                 os.path.join(target_directory, d))
+                except:
+                    err = f"Problem with copying file {f} from directory {d} for NTC. " \
+                          f"Check that it is present on A:."
+                    logging.exception(Exception(err))
+                    error_conditions(root, err)
+                    sys.exit(1)
     return "NTC copy successful"
 
 
@@ -164,28 +191,19 @@ def main():
     if not os.path.exists(os.path.join(results_directory_l_drive, f"{yr} Runs", worksheet_id)):
         os.makedirs(os.path.join(results_directory_l_drive, f"{yr} Runs", worksheet_id))
 
-    # Check all required data present on source drives
-    
-
     # Copy data from cluster to L: drive
-    try:
-        for sample in next(os.walk(os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer")))[1]:
-            # Name directories
-            archive_directory = os.path.join(archive_directory_cluster, run_id)
-            source_directory = os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer", sample)
-            target_directory = os.path.join(results_directory_l_drive, f"{yr} Runs", worksheet_id, sample)
-            # Make directory named after sample on L: drive
-            if not os.path.exists(target_directory):
-                os.makedirs(os.path.join(target_directory))
-            if sample not in ntc_names:
-                logger.info(copy_sample(source_directory, target_directory, run_id, sample))
-            else:
-                logger.info(copy_ntc(archive_directory, target_directory))
-    except:
-        err = AttributeError(f"Invalid run ID. Please check and try again.")
-        logging.exception(err)
-        error_conditions(root, err)
-        sys.exit(1)
+    for sample in next(os.walk(os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer")))[1]:
+        # Name directories
+        archive_directory = os.path.join(archive_directory_cluster, run_id)
+        source_directory = os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer", sample)
+        target_directory = os.path.join(results_directory_l_drive, f"{yr} Runs", worksheet_id, sample)
+        # Make directory named after sample on L: drive
+        if not os.path.exists(target_directory):
+            os.makedirs(os.path.join(target_directory))
+        if sample not in ntc_names:
+            logger.info(copy_sample(root, source_directory, target_directory, run_id, sample))
+        else:
+            logger.info(copy_ntc(root, archive_directory, target_directory))
 
     # Rename sample directories on L: drive with order. Do not rename NTC.
     for sample, d in all_variables.items():
@@ -205,10 +223,8 @@ def main():
 
     # Check expected number of entries in log file
     expected_num_log_entries = ((len(all_variables.keys()) - len(ntc_names)) * 2) + len(ntc_names)
-    print(expected_num_log_entries)
     with open(os.path.join(os.getcwd(), "tsca_copy.log"), 'r') as lf:
         num_log_entries = sum(1 for _ in lf)
-    print(num_log_entries)
     if num_log_entries == expected_num_log_entries:
         from box import MyInformationWindow
         i = MyInformationWindow(root, label_text="Software has completed successfully")
