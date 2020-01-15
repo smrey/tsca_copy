@@ -217,7 +217,14 @@ def main():
     # Rename sample directories on L: drive with order. Do not rename NTC.
     for sample, d in all_variables.items():
         # Find the number for order
-        retrieved_order = d.get('order')
+        try:
+            retrieved_order = d['order']
+        except KeyError:
+            err = f"Variables file does not contain the sample order as SampleSheet was made prior to 2020. This " \
+                  f"software cannot properly order the samples unless the variables files are manually edited."
+            logging.exception(err)
+            error_conditions(root, err)
+            sys.exit(1)
         if len(retrieved_order) != 2:
             order = f"0{retrieved_order}"
         else:
