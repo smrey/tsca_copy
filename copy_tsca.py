@@ -15,6 +15,7 @@ from config import ntc_directories
 from config import ntc_files
 from config import sample_directories
 from config import sample_files
+from config import cnv_files
 
 # Temp variables
 #run_id = "191220_NB551415_0052_AHVVJVAFXY"
@@ -213,6 +214,19 @@ def main():
             logger.info(copy_sample(root, source_directory, target_directory, run_id, sample))
         else:
             logger.info(copy_ntc(root, archive_directory, target_directory))
+
+    # Copy cnv calling data from cluster to L: drive
+    for c in cnv_files:
+        try:
+            shutil.copy2(os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer", f"{run_id}_{c}"),
+                         os.path.join(results_directory_l_drive, f"{yr} Runs", worksheet_id))
+        except:
+            err = f"CNV results file {run_id}_{c} could not be copied from " \
+                  f"{os.path.join(results_directory_cluster, run_id, 'IlluminaTruSightCancer')}. " \
+                  f"Please check to see if it is there."
+            logging.exception(err)
+            error_conditions(root, err)
+            sys.exit(1)
 
     # Rename sample directories on L: drive with order. Do not rename NTC.
     for sample, d in all_variables.items():
