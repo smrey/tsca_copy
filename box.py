@@ -1,15 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
-import logging
 
 
 class Dialog(tk.Toplevel):
 
-    def __init__(self, parent, title=None):
+    def __init__(self, parent, title=None, label_text=None):
         tk.Toplevel.__init__(self, parent)
         self.transient(parent)
         if title:
             self.title(title)
+        if label_text:
+            self.label_text = label_text
         self.parent = parent
         self.result = None
         body = tk.Frame(self)
@@ -21,7 +22,7 @@ class Dialog(tk.Toplevel):
             self.initial_focus = self
         self.protocol("WM_DELETE_WINDOW", self.cancel)
         self.geometry("+%d+%d" % (parent.winfo_rootx() - 200,
-                                    parent.winfo_rooty() - 50))
+                                  parent.winfo_rooty() - 50))
         self.initial_focus.focus_set()
         self.wait_window(self)
 
@@ -75,10 +76,19 @@ class MyEntryWindow(Dialog):
         self.label1.grid(column=0, row=0)
         self.e1 = ttk.Entry(master)
         self.e1.grid(column=1, row=0, pady=10)
-        return self.e1  # Intial focus will be here
+        return self.e1
 
     def apply(self):
         self.run_id = self.e1.get()
 
     def entry_button_callback(self, event):
         self.destroy()
+
+
+class MyInformationWindow(Dialog):
+
+    def body(self, master):
+        self.grid()
+        self.wm_title("TSCa File Copy Information")
+        self.label = ttk.Label(master, text=self.label_text)
+        self.label.grid(column=0, row=0)
