@@ -25,19 +25,28 @@ def error_conditions(root, e):
     i = MyInformationWindow(root, label_text=e)
 
 
-def parse_variables(run_id):
+def parse_variables(root, run_id):
     variables = {}
-    # Load variables files for all samples on the run
-    for s in next(os.walk(os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer")))[1]:
+    # Return to base of archive directory
+    archive_directory_base = os.path.normpath(archive_directory_cluster + os.sep + os.pardir)
+    # Load variables files for all samples on the run- original location on archive directory
+    for s in next(os.walk(os.path.join(archive_directory_base, "fastq", run_id, "Data")))[1]:
         current_variables = {}
-        with open(os.path.join(results_directory_cluster, run_id, "IlluminaTruSightCancer", s,
-                               f"{s}.variables")) as vf:
-            for line in vf:
-                split_line = line.rstrip().split("=")
-                try:
-                    current_variables[split_line[0]] = split_line[1]
-                except IndexError:
-                    pass
+        try:
+            with open(os.path.join(archive_directory_base, "fastq", run_id, "Data", s, f"{s}.variables")) as vf:
+                for line in vf:
+                    split_line = line.rstrip().split("=")
+                    try:
+                        current_variables[split_line[0]] = split_line[1]
+                    except IndexError:
+                        pass
+        except FileNotFoundError:
+            bad_directory = os.path.join(archive_directory_base, "fastq", run_id, "Data")
+            err = f"Variables file could not be found on A: drive for sample {s} in " \
+                  f"{bad_directory}. Please check to see if it is there."
+            logging.exception(err)
+            error_conditions(root, err)
+            sys.exit(1)
         variables[s] = current_variables
     return variables
 
@@ -165,7 +174,7 @@ def main():
     # Obtain worksheet id
     # Load variables files
     try:
-        all_variables = parse_variables(run_id)
+        all_variables = parse_variables(root, run_id)
     except StopIteration:
         err = f"Run id was entered incorrectly as {run_id}"
         logging.exception(err)
@@ -179,7 +188,7 @@ def main():
     worksheet_ids = list(set(worksheets))
 
     if len(worksheet_ids) != 1:
-        err = f"Unable to identify the worksheet id for run {run_id}. Program Exiting."
+        err = f"Unable to identify the worksheet id for run {run_id}."
         logging.exception(Exception(err))
         error_conditions(root, err)
         sys.exit(1)
