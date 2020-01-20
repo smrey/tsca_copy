@@ -154,7 +154,13 @@ def main():
     root.wm_title("TSCa file copy")
     root.label = ttk.Label(text="Software is working. Please wait.")
     root.label.grid(column=0,  row=0)
-    root.eval('tk::PlaceWindow %s center' % root.winfo_pathname(root.winfo_id()))
+    w = root.winfo_reqwidth()
+    h = root.winfo_reqheight()
+    sw = root.winfo_screenwidth()
+    sh = root.winfo_screenheight()
+    x = (sw / 2)
+    y = (sh / 2)
+    root.geometry("+%d+%d" % (x, y))
     from box import MyEntryWindow
     w = MyEntryWindow(root)
     try:

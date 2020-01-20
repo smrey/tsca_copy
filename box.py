@@ -21,8 +21,11 @@ class Dialog(tk.Toplevel):
         if not self.initial_focus:
             self.initial_focus = self
         self.protocol("WM_DELETE_WINDOW", self.cancel)
-        self.geometry("+%d+%d" % (parent.winfo_rootx() - 200,
-                                  parent.winfo_rooty() - 50))
+        sw = parent.winfo_screenwidth()
+        sh = parent.winfo_screenheight()
+        x = (sw / 2)
+        y = (sh / 2)
+        self.geometry("+%d+%d" % (x, y))
         self.initial_focus.focus_set()
         self.wait_window(self)
 
@@ -86,9 +89,9 @@ class MyEntryWindow(Dialog):
 
 
 class MyInformationWindow(Dialog):
-
     def body(self, master):
         self.grid()
         self.wm_title("TSCa File Copy Information")
+        master.grid()
         self.label = ttk.Label(master, text=self.label_text)
         self.label.grid(column=0, row=0)
